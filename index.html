@@ -6,7 +6,6 @@
     <title>Geografie & Koordinaten</title>
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -112,7 +111,6 @@
         .footer-action.visible { display: block; }
     </style>
 
-    <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
@@ -121,10 +119,10 @@
         <div class="menu-box">
             <h1>Geografie & Koordinaten</h1>
             <div class="mode-buttons">
-                <button class="mode-btn" onclick="startApp('blanko')">Welt-Profis (Komplett Stumm) <span>🌍</span></button>
-                <button class="mode-btn" onclick="startApp('schweiz')">Schweiz-Modus (Stumm & Voll) <span>🇨🇭</span></button>
-                <button class="mode-btn" onclick="startApp('koordinaten_einfach')">Koordinaten (Einfach - Netz) <span>📍</span></button>
-                <button class="mode-btn" onclick="startApp('koordinaten_profi')" style="border-color: rgba(212,175,55,0.4);">Koordinaten (Expertin) <span>⚡</span></button>
+                <button class="mode-btn" type="button" onclick="startApp('blanko')">Welt-Profis (Stumm) <span>🌍</span></button>
+                <button class="mode-btn" type="button" onclick="startApp('schweiz')">Schweiz-Modus (Stumm) <span>🇨🇭</span></button>
+                <button class="mode-btn" type="button" onclick="startApp('koordinaten_einfach')">Koordinaten (Einfach - Netz) <span>📍</span></button>
+                <button class="mode-btn" type="button" onclick="startApp('koordinaten_profi')" style="border-color: rgba(212,175,55,0.4);">Koordinaten (Expertin) <span>⚡</span></button>
             </div>
         </div>
     </div>
@@ -139,7 +137,7 @@
             <div class="header-logo-container">
                 <img src="logo.jpg" alt="Logo" class="header-logo">
             </div>
-            <button class="btn" onclick="location.reload()">← Menü</button>
+            <button class="btn" type="button" onclick="location.reload()">← Menü</button>
         </header>
 
         <main>
@@ -149,7 +147,7 @@
             </div>
             <div id="map"></div>
             <div class="footer-action" id="action-container">
-                <button class="btn btn-primary" onclick="confirmPin()">Pin bestätigen</button>
+                <button class="btn btn-primary" type="button" onclick="confirmPin()">Pin bestätigen</button>
             </div>
         </main>
     </div>
@@ -239,3 +237,141 @@
 
         function shuffle(array) {
             let arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                let j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function startApp(selectedMode) {
+            mode = selectedMode;
+            round = 1;
+            score = 0;
+            activePool = shuffle(masterData[mode]);
+
+            let screen = document.getElementById('start-screen');
+            if (screen) {
+                screen.style.display = 'none';
+            }
+
+            let title = 'WELT';
+            if (mode === 'schweiz') title = 'SCHWEIZ';
+            if (mode === 'koordinaten_einfach') title = 'KOORDINATEN (EINFACH)';
+            if (mode === 'koordinaten_profi') title = 'KOORDINATEN (EXPERTIN)';
+            document.getElementById('current-mode-label').innerText = title;
+            document.getElementById('total-score').innerText = score;
+
+            if (!map) {
+                map = L.map('map', { zoomControl: false }).setView([20, 0], 2);
+                L.control.zoom({ position: 'bottomright' }).addTo(map);
+                
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+                }).addTo(map);
+                
+                map.on('click', function(e) {
+                    if (!active) return;
+                    selLat = e.latlng.lat;
+                    selLng = e.latlng.lng;
+                    if (userMarker) {
+                        userMarker.setLatLng([selLat, selLng]);
+                    } else {
+                        userMarker = L.circleMarker([selLat, selLng], {
+                            radius: 8, color: '#fff', fillColor: '#d4af37', fillOpacity: 1, weight: 2
+                        }).addTo(map);
+                    }
+                    document.getElementById('action-container').classList.add('visible');
+                });
+            }
+
+            setTimeout(function() {
+                map.invalidateSize();
+                setMapBounds();
+                nextRound();
+            }, 200);
+
+            if (gridGroup) { map.removeLayer(gridGroup); gridGroup = null; }
+            if (mode === 'koordinaten_einfach') {
+                drawFineGrid();
+            }
+        }
+
+        function setMapBounds() {
+            if (mode === 'schweiz') {
+                map.setView([46.8182, 8.2275], 8);
+            } else {
+                map.setView([20, 0], 2);
+            }
+        }
+
+        function drawFineGrid() {
+            gridGroup = L.layerGroup();
+            for (let lat = -80; lat <= 80; lat += 10) {
+                let weight = (lat % 30 === 0) ? 1.5 : 0.8;
+                let opacity = (lat % 30 === 0) ? 0.8 : 0.4;
+                let line = L.polyline([[lat, -180], [lat, 180]], {color: '#d4af37', weight: weight, opacity: opacity, dashArray: '3, 3'});
+                gridGroup.addLayer(line);
+            }
+            for (let lng = -180; lng <= 180; lng += 10) {
+                let weight = (lng % 30 === 0) ? 1.5 : 0.8;
+                let opacity = (lng % 30 === 0) ? 0.8 : 0.4;
+                let line = L.polyline([[-85, lng], [85, lng]], {color: '#d4af37', weight: weight, opacity: opacity, dashArray: '3, 3'});
+                gridGroup.addLayer(line);
+            }
+            gridGroup.addTo(map);
+        }
+
+        function nextRound() {
+            if (round > maxRounds || activePool.length === 0) {
+                alert('Spiel beendet! Gesamtergebnis: ' + score + ' Punkte');
+                location.reload();
+                return;
+            }
+            document.getElementById('current-round').innerText = round + '/' + maxRounds;
+            if (userMarker) { map.removeLayer(userMarker); userMarker = null; }
+            if (targetMarker) { map.removeLayer(targetMarker); targetMarker = null; }
+            if (lineObj) { map.removeLayer(lineObj); lineObj = null; }
+            selLat = null; selLng = null;
+            document.getElementById('action-container').classList.remove('visible');
+
+            target = activePool.pop();
+
+            if (mode === 'koordinaten_einfach' || mode === 'koordinaten_profi') {
+                let la = Math.abs(target.lat).toFixed(2) + (target.lat >= 0 ? '° N' : '° S');
+                let lo = Math.abs(target.lng).toFixed(2) + (target.lng >= 0 ? '° E' : '° W');
+                document.getElementById('target-title').innerText = la + ', ' + lo;
+                document.getElementById('target-subtitle').innerText = mode === 'koordinaten_einfach' ? 'Nutze das Koordinatennetz. Pin setzen.' : 'Expertinnen-Modus: Reine Karte ohne Linien.';
+            } else {
+                document.getElementById('target-title').innerText = target.name;
+                document.getElementById('target-subtitle').innerText = 'Finde den Ort auf der Karte.';
+            }
+            active = true;
+        }
+
+        function confirmPin() {
+            if (selLat === null || selLng === null) return;
+            active = false;
+
+            let tLatLng = L.latLng(target.lat, target.lng);
+            let uLatLng = L.latLng(selLat, selLng);
+            let dist = Math.round(tLatLng.distanceTo(uLatLng) / 1000);
+            let pts = Math.max(0, 1000 - dist * 2);
+            score += pts;
+            document.getElementById('total-score').innerText = score;
+
+            targetMarker = L.circleMarker(tLatLng, { radius: 8, color: '#fff', fillColor: '#f85149', fillOpacity: 1, weight: 2 }).addTo(map);
+            lineObj = L.polyline([uLatLng, tLatLng], { color: '#9ba1a6', weight: 2, dashArray: '4, 4' }).addTo(map);
+
+            let displayName = target.name || (Math.abs(target.lat).toFixed(2) + '°, ' + Math.abs(target.lng).toFixed(2) + '°');
+            document.getElementById('target-title').innerText = displayName + ' (' + dist + ' km daneben)';
+            document.getElementById('target-subtitle').innerText = '+' + pts + ' Punkte. Nächste Runde...';
+            document.getElementById('action-container').classList.remove('visible');
+
+            round++;
+            setTimeout(nextRound, 4000);
+        }
+    </script>
+</body>
+</html>
