@@ -69,7 +69,6 @@
         main { flex: 1; width: 100%; position: relative; display: flex; }
         #map { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; background: #e8ecef; }
 
-        /* Der CSS-Filter entzieht den OSM-Kacheln die bunte Farbe, macht sie ruhig und dezent */
         .leaflet-tile-pane {
             filter: grayscale(90%) contrast(110%) brightness(95%);
         }
@@ -158,11 +157,6 @@
     </div>
 
     <script>
-        let map = null, mode = 'blanko', round = 1, maxRounds = 12, score = 0, target = null;
-        let userMarker = null, targetMarker = null, lineObj = null, gridGroup = null;
-        let selLat = null, selLng = null, active = false;
-        let activePool = [];
-
         const masterData = {
             blanko: [
                 { name: "Tokio (Japan)", lat: 35.6762, lng: 139.6503 },
@@ -236,66 +230,4 @@
                 { lat: 48.85, lng: 2.35, name: "Paris" }, { lat: 30.04, lng: 31.23, name: "Kairo" },
                 { lat: -33.86, lng: 151.20, name: "Sydney" }, { lat: 55.75, lng: 37.61, name: "Moskau" },
                 { lat: 39.90, lng: 116.40, name: "Peking" }, { lat: 19.43, lng: -99.13, name: "Mexico Stadt" },
-                { lat: 1.48, lng: 172.96, name: "Kiribati" }
-            ]
-        };
-
-        function shuffle(array) {
-            let arr = [...array];
-            for (let i = arr.length - 1; i > 0; i--) {
-                let j = Math.floor(Math.random() * (i + 1));
-                [arr[i], arr[j]] = [arr[j], arr[i]];
-            }
-            return arr;
-        }
-
-        function startApp(selectedMode) {
-            mode = selectedMode;
-            round = 1;
-            score = 0;
-            activePool = shuffle(masterData[mode]);
-
-            let screen = document.getElementById('start-screen');
-            if (screen) {
-                screen.style.display = 'none';
-            }
-
-            let title = 'WELT';
-            if (mode === 'schweiz') title = 'SCHWEIZ';
-            if (mode === 'koordinaten_einfach') title = 'KOORDINATEN (EINFACH)';
-            if (mode === 'koordinaten_profi') title = 'KOORDINATEN (EXPERTIN)';
-            document.getElementById('current-mode-label').innerText = title;
-            document.getElementById('total-score').innerText = score;
-
-            if (!map) {
-                map = L.map('map', { zoomControl: false }).setView([20, 0], 2);
-                L.control.zoom({ position: 'bottomright' }).addTo(map);
-                
-                // Stabiler Standard-OSM Layer mit unserem unbestechlichen CSS-Graustufenfilter
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    maxZoom: 19,
-                    attribution: '&copy; OpenStreetMap contributors'
-                }).addTo(map);
-                
-                map.on('click', function(e) {
-                    if (!active) return;
-                    selLat = e.latlng.lat;
-                    selLng = e.latlng.lng;
-                    if (userMarker) {
-                        userMarker.setLatLng([selLat, selLng]);
-                    } else {
-                        userMarker = L.circleMarker([selLat, selLng], {
-                            radius: 8, color: '#fff', fillColor: '#d4af37', fillOpacity: 1, weight: 2
-                        }).addTo(map);
-                    }
-                    document.getElementById('action-container').classList.add('visible');
-                });
-            }
-
-            setTimeout(function() {
-                map.invalidateSize();
-                setMapBounds();
-                nextRound();
-            }, 200);
-
-            if (gridGroup) { map.removeLayer(grid
+                { lat: 1.48, lng: 172
