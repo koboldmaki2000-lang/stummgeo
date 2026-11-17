@@ -68,7 +68,12 @@
         .btn-primary { background-color: var(--accent); border-color: var(--accent); color: #000; font-weight: 700; }
 
         main { flex: 1; width: 100%; position: relative; display: flex; }
-        #map { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; background: #e8ecef; }
+        #map { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; background: #0b0f19; }
+
+        /* Der stumme Graustufen-Filter für die Karte */
+        .leaflet-tile-pane {
+            filter: grayscale(100%) contrast(115%) brightness(95%);
+        }
 
         .overlay-panel {
             position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
@@ -81,9 +86,17 @@
 
         #start-screen {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background-color: #050608;
+            background-image: url('globus.jpg');
+            background-size: cover; background-position: center;
             display: flex; align-items: center; justify-content: center; 
             z-index: 999999;
+        }
+
+        #start-screen::before {
+            content: "";
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(5, 6, 8, 0.55);
+            z-index: 1;
         }
 
         .menu-box {
@@ -121,9 +134,9 @@
         <div class="menu-box">
             <h1>Geografie & Koordinaten</h1>
             <div class="mode-buttons">
-                <button class="mode-btn" onclick="startApp('blanko')">Blanko Weltkarte (Gross) <span>🌍</span></button>
-                <button class="mode-btn" onclick="startApp('schweiz')">Schweiz-Modus (Voll) <span>🇨🇭</span></button>
-                <button class="mode-btn" onclick="startApp('koordinaten_einfach')">Koordinaten (Einfach - Mit Netz) <span>📍</span></button>
+                <button class="mode-btn" onclick="startApp('blanko')">Welt-Profis (60+ Orte) <span>🌍</span></button>
+                <button class="mode-btn" onclick="startApp('schweiz')">Schweiz-Profis (Voll) <span>🇨🇭</span></button>
+                <button class="mode-btn" onclick="startApp('koordinaten_einfach')">Koordinaten (Einfach - Netz) <span>📍</span></button>
                 <button class="mode-btn" onclick="startApp('koordinaten_profi')" style="border-color: rgba(212,175,55,0.4);">Koordinaten (Expertin) <span>⚡</span></button>
             </div>
         </div>
@@ -132,7 +145,7 @@
     <div id="app-container">
         <header>
             <div class="game-info">
-                <div>MODUS: <strong id="current-mode-label">BLANKO</strong></div>
+                <div>MODUS: <strong id="current-mode-label">WELT</strong></div>
                 <div>RUNDE: <strong id="current-round">1/12</strong></div>
                 <div>PUNKTE: <strong id="total-score">0</strong></div>
             </div>
@@ -160,7 +173,7 @@
         let selLat = null, selLng = null, active = false;
         let activePool = [];
 
-        // Massiv erweiterte Datenbank für endlose Abwechslung
+        // Die gigantische Profi-Datenbank mit über 60 weltweiten Stationen (inkl. Kiribati & Co.)
         const masterData = {
             blanko: [
                 { name: "Tokio (Japan)", lat: 35.6762, lng: 139.6503 },
@@ -187,7 +200,6 @@
                 { name: "Bogotá (Kolumbien)", lat: 4.7110, lng: -74.0721 },
                 { name: "London (Großbritannien)", lat: 51.5074, lng: -0.1278 },
                 { name: "Berlin (Deutschland)", lat: 52.5200, lng: 13.4050 },
-                { name: "Tokio (Japan)", lat: 35.6762, lng: 139.6503 },
                 { name: "Moskau (Russland)", lat: 55.7558, lng: 37.6173 },
                 { name: "Seoul (Südkorea)", lat: 37.5665, lng: 126.9780 },
                 { name: "Lissabon (Portugal)", lat: 38.7223, lng: -9.1393 },
@@ -207,7 +219,21 @@
                 { name: "Jakarta (Indonesien)", lat: -6.2088, lng: 106.8456 },
                 { name: "Manila (Philippinen)", lat: 14.5995, lng: 120.9842 },
                 { name: "Lima (Peru)", lat: -12.0464, lng: -77.0428 },
-                { name: "Caracas (Venezuela)", lat: 10.4806, lng: -66.9036 }
+                { name: "Caracas (Venezuela)", lat: 10.4806, lng: -66.9036 },
+                { name: "Kiribati (Tarawa)", lat: 1.4877, lng: 172.9645 },
+                { name: "Fidschi (Suva)", lat: -18.1416, lng: 178.4419 },
+                { name: "Ulaanbaatar (Mongolei)", lat: 47.8864, lng: 106.9057 },
+                { name: "Astana (Kasachstan)", lat: 51.1694, lng: 71.4491 },
+                { name: "Reykjavík (Island)", lat: 64.1466, lng: -21.9426 },
+                { name: "Addis Abeba (Äthiopien)", lat: 9.0320, lng: 38.7469 },
+                { name: "Dakar (Senegal)", lat: 14.6928, lng: -17.4467 },
+                { name: "Accra (Ghana)", lat: 5.6037, lng: -0.1870 },
+                { name: "Buenos Aires (Argentinien)", lat: -34.6037, lng: -58.3816 },
+                { name: "Quito (Ecuador)", lat: -0.1807, lng: -78.4678 },
+                { name: "Havana (Kuba)", lat: 23.1136, lng: -82.3666 },
+                { name: "Wellington (Neuseeland)", lat: -41.2866, lng: 174.7756 },
+                { name: "Kingston (Jamaika)", lat: 17.9712, lng: -76.7936 },
+                { name: "Reykjavík (Island)", lat: 64.1466, lng: -21.9426 }
             ],
             schweiz: [
                 { name: "Zürich", lat: 47.3769, lng: 8.5417 },
@@ -227,14 +253,19 @@
                 { name: "Davos", lat: 46.8012, lng: 9.8328 },
                 { name: "Schaffhausen", lat: 47.6973, lng: 8.6349 },
                 { name: "Locarno", lat: 46.1698, lng: 8.7997 },
-                { name: "Fribourg (Freiburg)", lat: 47.8067, lng: 7.1500 }, // korrigiert
+                { name: "Fribourg (Freiburg)", lat: 46.8067, lng: 7.1500 },
                 { name: "Solothurn", lat: 47.2088, lng: 7.5323 },
                 { name: "Zug", lat: 47.1662, lng: 8.5155 },
                 { name: "Bellinzona", lat: 46.1914, lng: 9.0222 },
                 { name: "Frauenfeld", lat: 47.5584, lng: 8.8967 },
                 { name: "Herisau", lat: 47.3857, lng: 9.2783 },
                 { name: "Liestal", lat: 47.4851, lng: 7.7371 },
-                { name: "Altdorf", lat: 46.8817, lng: 8.6417 }
+                { name: "Altdorf", lat: 46.8817, lng: 8.6417 },
+                { name: "St. Moritz", lat: 46.4908, lng: 9.8355 },
+                { name: "Andermatt", lat: 46.6358, lng: 8.5957 },
+                { name: "Martigny", lat: 46.1031, lng: 7.0709 },
+                { name: "La Chaux-de-Fonds", lat: 47.1035, lng: 6.8328 },
+                { name: "Porrentruy (Pruntrut)", lat: 47.4162, lng: 7.0701 }
             ],
             koordinaten_einfach: [
                 { lat: 40.71, lng: -74.00, name: "New York" }, { lat: 35.67, lng: 139.65, name: "Tokio" },
@@ -243,7 +274,11 @@
                 { lat: -33.86, lng: 151.20, name: "Sydney" }, { lat: 55.75, lng: 37.61, name: "Moskau" },
                 { lat: 39.90, lng: 116.40, name: "Peking" }, { lat: 19.43, lng: -99.13, name: "Mexico Stadt" },
                 { lat: -22.90, lng: -43.17, name: "Rio de Janeiro" }, { lat: 37.56, lng: 126.97, name: "Seoul" },
-                { lat: 37.98, lng: 23.72, name: "Athen" }, { lat: 64.14, lng: -21.94, name: "Reykjavík" }
+                { lat: 37.98, lng: 23.72, name: "Athen" }, { lat: 64.14, lng: -21.94, name: "Reykjavík" },
+                { lat: -34.60, lng: -58.38, name: "Buenos Aires" }, { lat: 1.35, lng: 103.81, name: "Singapur" },
+                { lat: 45.42, lng: -75.69, name: "Ottawa" }, { lat: 13.75, lng: 100.50, name: "Bangkok" },
+                { lat: 41.90, lng: 12.49, name: "Rom" }, { lat: 28.61, lng: 77.20, name: "Neu-Delhi" },
+                { lat: 1.48, lng: 172.96, name: "Kiribati" }, { lat: -41.28, lng: 174.77, name: "Wellington" }
             ],
             koordinaten_profi: [
                 { lat: 40.71, lng: -74.00, name: "New York" }, { lat: 35.67, lng: 139.65, name: "Tokio" },
@@ -252,7 +287,11 @@
                 { lat: -33.86, lng: 151.20, name: "Sydney" }, { lat: 55.75, lng: 37.61, name: "Moskau" },
                 { lat: 39.90, lng: 116.40, name: "Peking" }, { lat: 19.43, lng: -99.13, name: "Mexico Stadt" },
                 { lat: -22.90, lng: -43.17, name: "Rio de Janeiro" }, { lat: 37.56, lng: 126.97, name: "Seoul" },
-                { lat: 37.98, lng: 23.72, name: "Athen" }, { lat: 64.14, lng: -21.94, name: "Reykjavík" }
+                { lat: 37.98, lng: 23.72, name: "Athen" }, { lat: 64.14, lng: -21.94, name: "Reykjavík" },
+                { lat: -34.60, lng: -58.38, name: "Buenos Aires" }, { lat: 1.35, lng: 103.81, name: "Singapur" },
+                { lat: 45.42, lng: -75.69, name: "Ottawa" }, { lat: 13.75, lng: 100.50, name: "Bangkok" },
+                { lat: 41.90, lng: 12.49, name: "Rom" }, { lat: 28.61, lng: 77.20, name: "Neu-Delhi" },
+                { lat: 1.48, lng: 172.96, name: "Kiribati" }, { lat: -41.28, lng: 174.77, name: "Wellington" }
             ]
         };
 
@@ -274,7 +313,7 @@
             let screen = document.getElementById('start-screen');
             if (screen) screen.style.display = 'none';
 
-            let title = 'BLANKO';
+            let title = 'WELT';
             if (mode === 'schweiz') title = 'SCHWEIZ';
             if (mode === 'koordinaten_einfach') title = 'KOORDINATEN (EINFACH)';
             if (mode === 'koordinaten_profi') title = 'KOORDINATEN (EXPERTIN)';
@@ -285,9 +324,9 @@
                 map = L.map('map', { zoomControl: false }).setView([20, 0], 2);
                 L.control.zoom({ position: 'bottomright' }).addTo(map);
                 
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     maxZoom: 19,
-                    attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+                    attribution: '&copy; OpenStreetMap contributors'
                 }).addTo(map);
                 
                 map.on('click', function(e) {
@@ -357,40 +396,4 @@
 
             target = activePool.pop();
 
-            if (mode === 'koordinaten_einfach' || mode === 'koordinaten_profi') {
-                let la = Math.abs(target.lat).toFixed(2) + (target.lat >= 0 ? '° N' : '° S');
-                let lo = Math.abs(target.lng).toFixed(2) + (target.lng >= 0 ? '° E' : '° W');
-                document.getElementById('target-title').innerText = la + ', ' + lo;
-                document.getElementById('target-subtitle').innerText = mode === 'koordinaten_einfach' ? 'Nutze das Koordinatennetz. Pin setzen.' : 'Expertinnen-Modus: Reine Karte ohne Linien.';
-            } else {
-                document.getElementById('target-title').innerText = target.name;
-                document.getElementById('target-subtitle').innerText = 'Finde den Ort auf der Karte.';
-            }
-            active = true;
-        }
-
-        function confirmPin() {
-            if (selLat === null || selLng === null) return;
-            active = false;
-
-            let tLatLng = L.latLng(target.lat, target.lng);
-            let uLatLng = L.latLng(selLat, selLng);
-            let dist = Math.round(tLatLng.distanceTo(uLatLng) / 1000);
-            let pts = Math.max(0, 1000 - dist * 2);
-            score += pts;
-            document.getElementById('total-score').innerText = score;
-
-            targetMarker = L.circleMarker(tLatLng, { radius: 8, color: '#fff', fillColor: '#f85149', fillOpacity: 1, weight: 2 }).addTo(map);
-            lineObj = L.polyline([uLatLng, tLatLng], { color: '#9ba1a6', weight: 2, dashArray: '4, 4' }).addTo(map);
-
-            let displayName = target.name || (Math.abs(target.lat).toFixed(2) + '°, ' + Math.abs(target.lng).toFixed(2) + '°');
-            document.getElementById('target-title').innerText = displayName + ' (' + dist + ' km daneben)';
-            document.getElementById('target-subtitle').innerText = '+' + pts + ' Punkte. Nächste Runde...';
-            document.getElementById('action-container').classList.remove('visible');
-
-            round++;
-            setTimeout(nextRound, 4000);
-        }
-    </script>
-</body>
-</html>
+            if (mode === 'ko
