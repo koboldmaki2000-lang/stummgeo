@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geografie & Koordinaten</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #050608;
+            --surface: rgba(14, 16, 22, 0.96);
+            --border: rgba(255, 255, 255, 0.2);
+            --text: #f0f2f5;
+            --text-muted: #9ba1a6;
+            --accent: #d4af37;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Lora', serif; }
+        h1, h2, h3, .btn, .mode-btn { font-family: 'Playfair Display', serif; }
+
+        body, html {
+            width: 100%; height: 100%;
+            background-color: var(--bg);
+            color: var(--text);
+            overflow: hidden;
+        }
+
+        #app-container {
+            display: flex; flex-direction: column;
+            width: 100vw; height: 100vh;
+            position: relative; z-index: 1;
+        }
+
+        header {
+            height: 85px; min-height: 85px;
+            background-color: rgba(10, 12, 16, 0.96);
+            backdrop-filter: blur(14px);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 32px; z-index: 100; position: relative;
+        }
+
+        .header-logo-container {
+            position: absolute; left: 50%; transform: translateX(-50%);
+            display: flex; align-items: center; justify-content: center;
+            height: 100%; pointer-events: none;
+        }
+
+        .header-logo {
+            width: 65px; height: 65px; border-radius: 50%; object-fit: cover;
+            border: 2px solid rgba(212, 175, 55, 0.7);
+        }
+
+        .game-info {
+            display: flex; gap: 24px; font-size: 0.85rem; color: var(--text-muted);
+        }
+        .game-info strong { color: var(--text); }
+
+        .btn {
+            background-color: transparent; border: 1px solid var(--border);
+            color: var(--text); padding: 8px 16px; border-radius: 4px;
+            cursor: pointer; font-size: 0.85rem; font-family: 'Playfair Display', serif;
+        }
+        .btn:hover { border-color: var(--accent); }
+        .btn-primary { background-color: var(--accent); border-color: var(--accent); color: #000; font-weight: 700; }
+
+        main { flex: 1; width: 100%; position: relative; display: flex; }
+        #map { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; background: #e8ecef; }
+
+        .overlay-panel {
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+            background: var(--surface); border: 1px solid var(--border);
+            padding: 16px 36px; border-radius: 8px; z-index: 500; text-align: center;
+            pointer-events: none; box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+        }
+        .overlay-panel h2 { font-size: 1.3rem; margin-bottom: 4px; color: var(--accent); }
+        .overlay-panel p { color: var(--text-muted); font-size: 0.85rem; }
+
+        #start-screen {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: #050608;
+            display: flex; align-items: center; justify-content: center; 
+            z-index: 999999;
+        }
+
+        .menu-box {
+            position: relative; z-index: 2;
+            background: rgba(14, 16, 22, 0.96); border: 2px solid var(--border);
+            padding: 45px; border-radius: 16px; width: 100%; max-width: 520px;
+            text-align: center; box-shadow: 0 30px 60px rgba(0,0,0,0.9);
+            backdrop-filter: blur(12px);
+        }
+        .menu-box h1 { font-size: 2.1rem; margin-bottom: 28px; color: var(--text); }
+
+        .mode-buttons { display: flex; flex-direction: column; gap: 14px; }
+        .mode-btn {
+            width: 100%; padding: 16px 20px; background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border); color: var(--text); border-radius: 8px;
+            cursor: pointer; text-align: left; display: flex; justify-content: space-between;
+            align-items: center; font-size: 1rem; font-family: 'Playfair Display', serif;
+            transition: all 0.2s ease;
+        }
+        .mode-btn:hover { border-color: var(--accent); background: rgba(212, 175, 55, 0.25); transform: translateY(-2px); }
+
+        .footer-action {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            z-index: 600; display: none;
+        }
+        .footer-action.visible { display: block; }
+    </style>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+
+    <div id="start-screen">
+        <div class="menu-box">
+            <h1>Geografie & Koordinaten</h1>
+            <div class="mode-buttons">
+                <button class="mode-btn" onclick="startApp('blanko')">Blanko Weltkarte (Gross) <span>🌍</span></button>
+                <button class="mode-btn" onclick="startApp('schweiz')">Schweiz-Modus (Voll) <span>🇨🇭</span></button>
+                <button class="mode-btn" onclick="startApp('koordinaten_einfach')">Koordinaten (Einfach - Mit Netz) <span>📍</span></button>
+                <button class="mode-btn" onclick="startApp('koordinaten_profi')" style="border-color: rgba(212,175,55,0.4);">Koordinaten (Expertin) <span>⚡</span></button>
+            </div>
+        </div>
+    </div>
+
+    <div id="app-container">
+        <header>
+            <div class="game-info">
+                <div>MODUS: <strong id="current-mode-label">BLANKO</strong></div>
+                <div>RUNDE: <strong id="current-round">1/12</strong></div>
+                <div>PUNKTE: <strong id="total-score">0</strong></div>
+            </div>
+            <div class="header-logo-container">
+                <img src="logo.jpg" alt="Logo" class="header-logo">
+            </div>
+            <button class="btn" onclick="location.reload()">← Menü</button>
+        </header>
+
+        <main>
+            <div class="overlay-panel" id="instruction-panel">
+                <h2 id="target-title">Lade...</h2>
+                <p id="target-subtitle">Platziere einen Pin auf der Karte.</p>
+            </div>
+            <div id="map"></div>
+            <div class="footer-action" id="action-container">
+                <button class="btn btn-primary" onclick="confirmPin()">Pin bestätigen</button>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let map = null, mode = 'blanko', round = 1, maxRounds = 12, score = 0, target = null;
+        let userMarker = null, targetMarker = null, lineObj = null, gridGroup = null;
+        let selLat = null, selLng = null, active = false;
+        let activePool = [];
+
+        // Massiv erweiterte Datenbank für endlose Abwechslung
+        const masterData = {
+            blanko: [
+                { name: "Tokio (Japan)", lat: 35.6762, lng: 139.6503 },
+                { name: "Buenos Aires (Argentinien)", lat: -34.6037, lng: -58.3816 },
+                { name: "Kairo (Ägypten)", lat: 30.0444, lng: 31.2357 },
+                { name: "Reykjavík (Island)", lat: 64.1466, lng: -21.9426 },
+                { name: "Wellington (Neuseeland)", lat: -41.2866, lng: 174.7756 },
+                { name: "Singapur (Singapur)", lat: 1.3521, lng: 103.8198 },
+                { name: "Kapstadt (Südafrika)", lat: -33.9249, lng: 18.4241 },
+                { name: "New York (USA)", lat: 40.7128, lng: -74.0060 },
+                { name: "Sydney (Australien)", lat: -33.8688, lng: 151.2093 },
+                { name: "Rio de Janeiro (Brasilien)", lat: -22.9068, lng: -43.1729 },
+                { name: "Peking (China)", lat: 39.9042, lng: 116.4074 },
+                { name: "Nairobi (Kenia)", lat: -1.2921, lng: 36.8219 },
+                { name: "Paris (Frankreich)", lat: 48.8566, lng: 2.3522 },
+                { name: "Ottawa (Kanada)", lat: 45.4215, lng: -75.6972 },
+                { name: "Bangkok (Thailand)", lat: 13.7563, lng: 100.5018 },
+                { name: "Rom (Italien)", lat: 41.9028, lng: 12.4964 },
+                { name: "Mexico City (Mexiko)", lat: 19.4326, lng: -99.1332 },
+                { name: "Neu-Delhi (Indien)", lat: 28.6139, lng: 77.2090 },
+                { name: "Stockholm (Schweden)", lat: 59.3293, lng: 18.0686 },
+                { name: "Santiago de Chile", lat: -33.4489, lng: -70.6693 },
+                { name: "Athen (Griechenland)", lat: 37.9838, lng: 23.7275 },
+                { name: "Bogotá (Kolumbien)", lat: 4.7110, lng: -74.0721 },
+                { name: "London (Großbritannien)", lat: 51.5074, lng: -0.1278 },
+                { name: "Berlin (Deutschland)", lat: 52.5200, lng: 13.4050 },
+                { name: "Tokio (Japan)", lat: 35.6762, lng: 139.6503 },
+                { name: "Moskau (Russland)", lat: 55.7558, lng: 37.6173 },
+                { name: "Seoul (Südkorea)", lat: 37.5665, lng: 126.9780 },
+                { name: "Lissabon (Portugal)", lat: 38.7223, lng: -9.1393 },
+                { name: "Madrid (Spanien)", lat: 40.4168, lng: -3.7038 },
+                { name: "Wien (Österreich)", lat: 48.2082, lng: 16.3738 },
+                { name: "Oslo (Norwegen)", lat: 59.9139, lng: 10.7522 },
+                { name: "Helsinki (Finnland)", lat: 60.1699, lng: 24.9384 },
+                { name: "Warschau (Polen)", lat: 52.2297, lng: 21.0122 },
+                { name: "Prag (Tschechien)", lat: 50.0755, lng: 14.4378 },
+                { name: "Budapest (Ungarn)", lat: 47.4979, lng: 19.0402 },
+                { name: "Dublin (Irland)", lat: 53.3498, lng: -6.2603 },
+                { name: "Kopenhagen (Dänemark)", lat: 55.6761, lng: 12.5683 },
+                { name: "Ankara (Türkei)", lat: 39.9334, lng: 32.8597 },
+                { name: "Teheran (Iran)", lat: 35.6892, lng: 51.3890 },
+                { name: "Bagdad (Irak)", lat: 33.3152, lng: 44.3661 },
+                { name: "Riad (Saudi-Arabien)", lat: 24.7136, lng: 46.6753 },
+                { name: "Jakarta (Indonesien)", lat: -6.2088, lng: 106.8456 },
+                { name: "Manila (Philippinen)", lat: 14.5995, lng: 120.9842 },
+                { name: "Lima (Peru)", lat: -12.0464, lng: -77.0428 },
+                { name: "Caracas (Venezuela)", lat: 10.4806, lng: -66.9036 }
+            ],
+            schweiz: [
+                { name: "Zürich", lat: 47.3769, lng: 8.5417 },
+                { name: "Genf", lat: 46.2044, lng: 6.1432 },
+                { name: "Bern", lat: 46.9480, lng: 7.4474 },
+                { name: "Basel", lat: 47.5596, lng: 7.5886 },
+                { name: "Lausanne", lat: 46.5197, lng: 6.6323 },
+                { name: "Luzern", lat: 47.0502, lng: 8.3093 },
+                { name: "Lugano", lat: 46.0037, lng: 8.9511 },
+                { name: "St. Gallen", lat: 47.4245, lng: 9.3767 },
+                { name: "Chur", lat: 46.8508, lng: 9.5320 },
+                { name: "Sion (Sitten)", lat: 46.2333, lng: 7.3582 },
+                { name: "Thun", lat: 46.7580, lng: 7.6279 },
+                { name: "Neuenburg (Neuchâtel)", lat: 46.9929, lng: 6.9315 },
+                { name: "Interlaken", lat: 46.6863, lng: 7.8632 },
+                { name: "Zermatt", lat: 46.0207, lng: 7.7491 },
+                { name: "Davos", lat: 46.8012, lng: 9.8328 },
+                { name: "Schaffhausen", lat: 47.6973, lng: 8.6349 },
+                { name: "Locarno", lat: 46.1698, lng: 8.7997 },
+                { name: "Fribourg (Freiburg)", lat: 47.8067, lng: 7.1500 }, // korrigiert
+                { name: "Solothurn", lat: 47.2088, lng: 7.5323 },
+                { name: "Zug", lat: 47.1662, lng: 8.5155 },
+                { name: "Bellinzona", lat: 46.1914, lng: 9.0222 },
+                { name: "Frauenfeld", lat: 47.5584, lng: 8.8967 },
+                { name: "Herisau", lat: 47.3857, lng: 9.2783 },
+                { name: "Liestal", lat: 47.4851, lng: 7.7371 },
+                { name: "Altdorf", lat: 46.8817, lng: 8.6417 }
+            ],
+            koordinaten_einfach: [
+                { lat: 40.71, lng: -74.00, name: "New York" }, { lat: 35.67, lng: 139.65, name: "Tokio" },
+                { lat: -33.92, lng: 18.42, name: "Kapstadt" }, { lat: 51.50, lng: -0.12, name: "London" },
+                { lat: 48.85, lng: 2.35, name: "Paris" }, { lat: 30.04, lng: 31.23, name: "Kairo" },
+                { lat: -33.86, lng: 151.20, name: "Sydney" }, { lat: 55.75, lng: 37.61, name: "Moskau" },
+                { lat: 39.90, lng: 116.40, name: "Peking" }, { lat: 19.43, lng: -99.13, name: "Mexico Stadt" },
+                { lat: -22.90, lng: -43.17, name: "Rio de Janeiro" }, { lat: 37.56, lng: 126.97, name: "Seoul" },
+                { lat: 37.98, lng: 23.72, name: "Athen" }, { lat: 64.14, lng: -21.94, name: "Reykjavík" }
+            ],
+            koordinaten_profi: [
+                { lat: 40.71, lng: -74.00, name: "New York" }, { lat: 35.67, lng: 139.65, name: "Tokio" },
+                { lat: -33.92, lng: 18.42, name: "Kapstadt" }, { lat: 51.50, lng: -0.12, name: "London" },
+                { lat: 48.85, lng: 2.35, name: "Paris" }, { lat: 30.04, lng: 31.23, name: "Kairo" },
+                { lat: -33.86, lng: 151.20, name: "Sydney" }, { lat: 55.75, lng: 37.61, name: "Moskau" },
+                { lat: 39.90, lng: 116.40, name: "Peking" }, { lat: 19.43, lng: -99.13, name: "Mexico Stadt" },
+                { lat: -22.90, lng: -43.17, name: "Rio de Janeiro" }, { lat: 37.56, lng: 126.97, name: "Seoul" },
+                { lat: 37.98, lng: 23.72, name: "Athen" }, { lat: 64.14, lng: -21.94, name: "Reykjavík" }
+            ]
+        };
+
+        function shuffle(array) {
+            let arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                let j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function startApp(selectedMode) {
+            mode = selectedMode;
+            round = 1;
+            score = 0;
+            activePool = shuffle(masterData[mode]);
+
+            let screen = document.getElementById('start-screen');
+            if (screen) screen.style.display = 'none';
+
+            let title = 'BLANKO';
+            if (mode === 'schweiz') title = 'SCHWEIZ';
+            if (mode === 'koordinaten_einfach') title = 'KOORDINATEN (EINFACH)';
+            if (mode === 'koordinaten_profi') title = 'KOORDINATEN (EXPERTIN)';
+            document.getElementById('current-mode-label').innerText = title;
+            document.getElementById('total-score').innerText = score;
+
+            if (!map) {
+                map = L.map('map', { zoomControl: false }).setView([20, 0], 2);
+                L.control.zoom({ position: 'bottomright' }).addTo(map);
+                
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+                }).addTo(map);
+                
+                map.on('click', function(e) {
+                    if (!active) return;
+                    selLat = e.latlng.lat;
+                    selLng = e.latlng.lng;
+                    if (userMarker) {
+                        userMarker.setLatLng([selLat, selLng]);
+                    } else {
+                        userMarker = L.circleMarker([selLat, selLng], {
+                            radius: 8, color: '#fff', fillColor: '#d4af37', fillOpacity: 1, weight: 2
+                        }).addTo(map);
+                    }
+                    document.getElementById('action-container').classList.add('visible');
+                });
+            }
+
+            setTimeout(function() {
+                map.invalidateSize();
+                setMapBounds();
+                nextRound();
+            }, 100);
+
+            if (gridGroup) { map.removeLayer(gridGroup); gridGroup = null; }
+            if (mode === 'koordinaten_einfach') {
+                drawFineGrid();
+            }
+        }
+
+        function setMapBounds() {
+            if (mode === 'schweiz') {
+                map.setView([46.8182, 8.2275], 8);
+            } else {
+                map.setView([20, 0], 2);
+            }
+        }
+
+        function drawFineGrid() {
+            gridGroup = L.layerGroup();
+            for (let lat = -80; lat <= 80; lat += 10) {
+                let weight = (lat % 30 === 0) ? 1.5 : 0.8;
+                let opacity = (lat % 30 === 0) ? 0.8 : 0.4;
+                let line = L.polyline([[lat, -180], [lat, 180]], {color: '#d4af37', weight: weight, opacity: opacity, dashArray: '3, 3'});
+                gridGroup.addLayer(line);
+            }
+            for (let lng = -180; lng <= 180; lng += 10) {
+                let weight = (lng % 30 === 0) ? 1.5 : 0.8;
+                let opacity = (lng % 30 === 0) ? 0.8 : 0.4;
+                let line = L.polyline([[-85, lng], [85, lng]], {color: '#d4af37', weight: weight, opacity: opacity, dashArray: '3, 3'});
+                gridGroup.addLayer(line);
+            }
+            gridGroup.addTo(map);
+        }
+
+        function nextRound() {
+            if (round > maxRounds || activePool.length === 0) {
+                alert('Spiel beendet! Gesamtergebnis: ' + score + ' Punkte');
+                location.reload();
+                return;
+            }
+            document.getElementById('current-round').innerText = round + '/' + maxRounds;
+            if (userMarker) { map.removeLayer(userMarker); userMarker = null; }
+            if (targetMarker) { map.removeLayer(targetMarker); targetMarker = null; }
+            if (lineObj) { map.removeLayer(lineObj); lineObj = null; }
+            selLat = null; selLng = null;
+            document.getElementById('action-container').classList.remove('visible');
+
+            target = activePool.pop();
+
+            if (mode === 'koordinaten_einfach' || mode === 'koordinaten_profi') {
+                let la = Math.abs(target.lat).toFixed(2) + (target.lat >= 0 ? '° N' : '° S');
+                let lo = Math.abs(target.lng).toFixed(2) + (target.lng >= 0 ? '° E' : '° W');
+                document.getElementById('target-title').innerText = la + ', ' + lo;
+                document.getElementById('target-subtitle').innerText = mode === 'koordinaten_einfach' ? 'Nutze das Koordinatennetz. Pin setzen.' : 'Expertinnen-Modus: Reine Karte ohne Linien.';
+            } else {
+                document.getElementById('target-title').innerText = target.name;
+                document.getElementById('target-subtitle').innerText = 'Finde den Ort auf der Karte.';
+            }
+            active = true;
+        }
+
+        function confirmPin() {
+            if (selLat === null || selLng === null) return;
+            active = false;
+
+            let tLatLng = L.latLng(target.lat, target.lng);
+            let uLatLng = L.latLng(selLat, selLng);
+            let dist = Math.round(tLatLng.distanceTo(uLatLng) / 1000);
+            let pts = Math.max(0, 1000 - dist * 2);
+            score += pts;
+            document.getElementById('total-score').innerText = score;
+
+            targetMarker = L.circleMarker(tLatLng, { radius: 8, color: '#fff', fillColor: '#f85149', fillOpacity: 1, weight: 2 }).addTo(map);
+            lineObj = L.polyline([uLatLng, tLatLng], { color: '#9ba1a6', weight: 2, dashArray: '4, 4' }).addTo(map);
+
+            let displayName = target.name || (Math.abs(target.lat).toFixed(2) + '°, ' + Math.abs(target.lng).toFixed(2) + '°');
+            document.getElementById('target-title').innerText = displayName + ' (' + dist + ' km daneben)';
+            document.getElementById('target-subtitle').innerText = '+' + pts + ' Punkte. Nächste Runde...';
+            document.getElementById('action-container').classList.remove('visible');
+
+            round++;
+            setTimeout(nextRound, 4000);
+        }
+    </script>
+</body>
+</html>
