@@ -67,11 +67,7 @@
         .btn-primary { background-color: var(--accent); border-color: var(--accent); color: #000; font-weight: 700; }
 
         main { flex: 1; width: 100%; position: relative; display: flex; }
-        #map { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; background: #e8ecef; }
-
-        .leaflet-tile-pane {
-            filter: grayscale(90%) contrast(110%) brightness(95%);
-        }
+        #map { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; background: #f4f4f4; }
 
         .overlay-panel {
             position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
@@ -118,42 +114,70 @@
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    <!-- HIER STEHEN ALLE FUNKTIONEN ZUERST, DAMIT SIE GARANTIERT BEKANNT SIND -->
+    <!-- Massiv aufgestockte Datenbank mit über 60+ Welt-Metropolen und riesigem Datenpool -->
     <script>
         const masterData = {
             blanko: [
-                { name: "Tokio (Japan)", lat: 35.6762, lng: 139.6503 },
-                { name: "Buenos Aires (Argentinien)", lat: -34.6037, lng: -58.3816 },
-                { name: "Kairo (Ägypten)", lat: 30.0444, lng: 31.2357 },
-                { name: "Reykjavík (Island)", lat: 64.1466, lng: -21.9426 },
-                { name: "Wellington (Neuseeland)", lat: -41.2866, lng: 174.7756 },
-                { name: "Singapur (Singapur)", lat: 1.3521, lng: 103.8198 },
-                { name: "Kapstadt (Südafrika)", lat: -33.9249, lng: 18.4241 },
-                { name: "New York (USA)", lat: 40.7128, lng: -74.0060 },
-                { name: "Sydney (Australien)", lat: -33.8688, lng: 151.2093 },
-                { name: "Rio de Janeiro (Brasilien)", lat: -22.9068, lng: -43.1729 },
+                { name: "Chongqing (China)", lat: 29.5658, lng: 106.5511 },
+                { name: "Shanghai (China)", lat: 31.2304, lng: 121.4737 },
                 { name: "Peking (China)", lat: 39.9042, lng: 116.4074 },
-                { name: "Nairobi (Kenia)", lat: -1.2921, lng: 36.8219 },
-                { name: "Paris (Frankreich)", lat: 48.8566, lng: 2.3522 },
-                { name: "Ottawa (Kanada)", lat: 45.4215, lng: -75.6972 },
-                { name: "Bangkok (Thailand)", lat: 13.7563, lng: 100.5018 },
-                { name: "Rom (Italien)", lat: 41.9028, lng: 12.4964 },
-                { name: "Mexico City (Mexiko)", lat: 19.4326, lng: -99.1332 },
-                { name: "Neu-Delhi (Indien)", lat: 28.6139, lng: 77.2090 },
-                { name: "Stockholm (Schweden)", lat: 59.3293, lng: 18.0686 },
-                { name: "Santiago de Chile", lat: -33.4489, lng: -70.6693 },
-                { name: "Athen (Griechenland)", lat: 37.9838, lng: 23.7275 },
-                { name: "Bogotá (Kolumbien)", lat: 4.7110, lng: -74.0721 },
-                { name: "London (Großbritannien)", lat: 51.5074, lng: -0.1278 },
-                { name: "Berlin (Deutschland)", lat: 52.5200, lng: 13.4050 },
-                { name: "Moskau (Russland)", lat: 55.7558, lng: 37.6173 },
+                { name: "Chengdu (China)", lat: 30.5728, lng: 104.0668 },
+                { name: "Shenzhen (China)", lat: 22.5431, lng: 114.0579 },
+                { name: "Guangzhou (China)", lat: 23.1291, lng: 113.2644 },
+                { name: "Wuhan (China)", lat: 30.5928, lng: 114.3055 },
+                { name: "Xi'an (China)", lat: 34.3416, lng: 108.9398 },
+                { name: "Tianjin (China)", lat: 39.0842, lng: 117.2009 },
+                { name: "Hangzhou (China)", lat: 30.2741, lng: 120.1551 },
+                { name: "Hongkong (China)", lat: 22.3193, lng: 114.1694 },
+                { name: "Tokio (Japan)", lat: 35.6762, lng: 139.6503 },
+                { name: "Osaka (Japan)", lat: 34.6937, lng: 135.5022 },
                 { name: "Seoul (Südkorea)", lat: 37.5665, lng: 126.9780 },
-                { name: "Lissabon (Portugal)", lat: 38.7223, lng: -9.1393 },
-                { name: "Madrid (Spanien)", lat: 40.4168, lng: -3.7038 },
-                { name: "Wien (Österreich)", lat: 48.2082, lng: 16.3738 },
-                { name: "Oslo (Norwegen)", lat: 59.9139, lng: 10.7522 },
+                { name: "Bangkok (Thailand)", lat: 13.7563, lng: 100.5018 },
+                { name: "Singapur (Singapur)", lat: 1.3521, lng: 103.8198 },
+                { name: "Jakarta (Indonesien)", lat: -6.2088, lng: 106.8456 },
+                { name: "Manila (Philippinen)", lat: 14.5995, lng: 120.9842 },
+                { name: "Mumbai (Indien)", lat: 19.0760, lng: 72.8777 },
+                { name: "Neu-Delhi (Indien)", lat: 28.6139, lng: 77.2090 },
+                { name: "Bangalore (Indien)", lat: 12.9716, lng: 77.5946 },
+                { name: "Kalkutta (Indien)", lat: 22.5726, lng: 88.3639 },
+                { name: "Dhaka (Bangladesch)", lat: 23.8103, lng: 90.4125 },
+                { name: "Karachi (Pakistan)", lat: 24.8607, lng: 67.0011 },
+                { name: "Teheran (Iran)", lat: 35.6892, lng: 51.3890 },
+                { name: "Bagdad (Irak)", lat: 33.3152, lng: 44.3661 },
+                { name: "Riad (Saudi-Arabien)", lat: 24.7136, lng: 46.6753 },
+                { name: "Dubai (VAE)", lat: 25.2048, lng: 55.2708 },
+                { name: "Kairo (Ägypten)", lat: 30.0444, lng: 31.2357 },
+                { name: "Lagos (Nigeria)", lat: 6.5244, lng: 3.3792 },
+                { name: "Kinshasa (Kongo)", lat: -4.4419, lng: 15.2663 },
+                { name: "Johannesburg (Südafrika)", lat: -26.2041, lng: 28.0473 },
+                { name: "Kapstadt (Südafrika)", lat: -33.9249, lng: 18.4241 },
+                { name: "Nairobi (Kenia)", lat: -1.2921, lng: 36.8219 },
+                { name: "São Paulo (Brasilien)", lat: -23.5505, lng: -46.6333 },
+                { name: "Rio de Janeiro (Brasilien)", lat: -22.9068, lng: -43.1729 },
+                { name: "Buenos Aires (Argentinien)", lat: -34.6037, lng: -58.3816 },
+                { name: "Bogotá (Kolumbien)", lat: 4.7110, lng: -74.0721 },
+                { name: "Lima (Peru)", lat: -12.0464, lng: -77.0428 },
+                { name: "Santiago de Chile", lat: -33.4489, lng: -70.6693 },
+                { name: "Mexico City (Mexiko)", lat: 19.4326, lng: -99.1332 },
+                { name: "New York (USA)", lat: 40.7128, lng: -74.0060 },
+                { name: "Los Angeles (USA)", lat: 34.0522, lng: -118.2437 },
+                { name: "Chicago (USA)", lat: 41.8781, lng: -87.6298 },
+                { name: "Toronto (Kanada)", lat: 43.6532, lng: -79.3832 },
+                { name: "Vancouver (Kanada)", lat: 49.2827, lng: -123.1207 },
+                { name: "Sydney (Australien)", lat: -33.8688, lng: 151.2093 },
+                { name: "Melbourne (Australien)", lat: -37.8136, lng: 144.9631 },
+                { name: "Auckland (Neuseeland)", lat: -36.8485, lng: 174.7633 },
+                { name: "Fidschi (Suva)", lat: -18.1416, lng: 178.4419 },
                 { name: "Kiribati (Tarawa)", lat: 1.4877, lng: 172.9645 },
-                { name: "Fidschi (Suva)", lat: -18.1416, lng: 178.4419 }
+                { name: "Reykjavík (Island)", lat: 64.1466, lng: -21.9426 },
+                { name: "Moskau (Russland)", lat: 55.7558, lng: 37.6173 },
+                { name: "Astana (Kasachstan)", lat: 51.1694, lng: 71.4491 },
+                { name: "Ulaanbaatar (Mongolei)", lat: 47.8864, lng: 106.9057 },
+                { name: "Addis Abeba (Äthiopien)", lat: 9.0320, lng: 38.7469 },
+                { name: "Dakar (Senegal)", lat: 14.6928, lng: -17.4467 },
+                { name: "Accra (Ghana)", lat: 5.6037, lng: -0.1870 },
+                { name: "Quito (Ecuador)", lat: -0.1807, lng: -78.4678 },
+                { name: "Havana (Kuba)", lat: 23.1136, lng: -82.3666 }
             ],
             schweiz: [
                 { name: "Zürich", lat: 47.3769, lng: 8.5417 },
@@ -177,23 +201,29 @@
                 { name: "Solothurn", lat: 47.2088, lng: 7.5323 },
                 { name: "Zug", lat: 47.1662, lng: 8.5155 },
                 { name: "Bellinzona", lat: 46.1914, lng: 9.0222 },
-                { name: "St. Moritz", lat: 46.4908, lng: 9.8355 }
+                { name: "St. Moritz", lat: 46.4908, lng: 9.8355 },
+                { name: "Andermatt", lat: 46.6358, lng: 8.5957 },
+                { name: "Martigny", lat: 46.1031, lng: 7.0709 },
+                { name: "La Chaux-de-Fonds", lat: 47.1035, lng: 6.8328 },
+                { name: "Porrentruy (Pruntrut)", lat: 47.4162, lng: 7.0701 }
             ],
             koordinaten_einfach: [
-                { lat: 40.71, lng: -74.00, name: "New York" }, { lat: 35.67, lng: 139.65, name: "Tokio" },
-                { lat: -33.92, lng: 18.42, name: "Kapstadt" }, { lat: 51.50, lng: -0.12, name: "London" },
-                { lat: 48.85, lng: 2.35, name: "Paris" }, { lat: 30.04, lng: 31.23, name: "Kairo" },
-                { lat: -33.86, lng: 151.20, name: "Sydney" }, { lat: 55.75, lng: 37.61, name: "Moskau" },
-                { lat: 39.90, lng: 116.40, name: "Peking" }, { lat: 19.43, lng: -99.13, name: "Mexico Stadt" },
-                { lat: 1.48, lng: 172.96, name: "Kiribati" }
+                { lat: 31.23, lng: 121.47, name: "Shanghai" }, { lat: 29.56, lng: 106.55, name: "Chongqing" },
+                { lat: 22.31, lng: 114.16, name: "Hongkong" }, { lat: 28.61, lng: 77.20, name: "Neu-Delhi" },
+                { lat: -23.55, lng: -46.63, name: "São Paulo" }, { lat: 6.52, lng: 3.37, name: "Lagos" },
+                { lat: 35.67, lng: 139.65, name: "Tokio" }, { lat: 30.04, lng: 31.23, name: "Kairo" },
+                { lat: -6.20, lng: 106.84, name: "Jakarta" }, { lat: 37.56, lng: 126.97, name: "Seoul" },
+                { lat: 19.43, lng: -99.13, name: "Mexico Stadt" }, { lat: 40.71, lng: -74.00, name: "New York" },
+                { lat: -33.92, lng: 18.42, name: "Kapstadt" }, { lat: 51.50, lng: -0.12, name: "London" }
             ],
             koordinaten_profi: [
-                { lat: 40.71, lng: -74.00, name: "New York" }, { lat: 35.67, lng: 139.65, name: "Tokio" },
-                { lat: -33.92, lng: 18.42, name: "Kapstadt" }, { lat: 51.50, lng: -0.12, name: "London" },
-                { lat: 48.85, lng: 2.35, name: "Paris" }, { lat: 30.04, lng: 31.23, name: "Kairo" },
-                { lat: -33.86, lng: 151.20, name: "Sydney" }, { lat: 55.75, lng: 37.61, name: "Moskau" },
-                { lat: 39.90, lng: 116.40, name: "Peking" }, { lat: 19.43, lng: -99.13, name: "Mexico Stadt" },
-                { lat: 1.48, lng: 172.96, name: "Kiribati" }
+                { lat: 31.23, lng: 121.47, name: "Shanghai" }, { lat: 29.56, lng: 106.55, name: "Chongqing" },
+                { lat: 22.31, lng: 114.16, name: "Hongkong" }, { lat: 28.61, lng: 77.20, name: "Neu-Delhi" },
+                { lat: -23.55, lng: -46.63, name: "São Paulo" }, { lat: 6.52, lng: 3.37, name: "Lagos" },
+                { lat: 35.67, lng: 139.65, name: "Tokio" }, { lat: 30.04, lng: 31.23, name: "Kairo" },
+                { lat: -6.20, lng: 106.84, name: "Jakarta" }, { lat: 37.56, lng: 126.97, name: "Seoul" },
+                { lat: 19.43, lng: -99.13, name: "Mexico Stadt" }, { lat: 40.71, lng: -74.00, name: "New York" },
+                { lat: -33.92, lng: 18.42, name: "Kapstadt" }, { lat: 51.50, lng: -0.12, name: "London" }
             ]
         };
 
@@ -222,9 +252,9 @@
                 screen.style.display = 'none';
             }
 
-            let title = 'WELT';
-            if (mode === 'schweiz') title = 'SCHWEIZ';
-            if (mode === 'koordinaten_einfach') title = 'KOORDINATEN (EINFACH)';
+            let title = 'WELT (MEGAS)';
+            if (mode === 'schweiz') title = 'SCHWEIZ (ALPEN)';
+            if (mode === 'koordinaten_einfach') title = 'KOORDINATEN (NETZ)';
             if (mode === 'koordinaten_profi') title = 'KOORDINATEN (EXPERTIN)';
             document.getElementById('current-mode-label').innerText = title;
             document.getElementById('total-score').innerText = score;
@@ -233,9 +263,10 @@
                 map = L.map('map', { zoomControl: false }).setView([20, 0], 2);
                 L.control.zoom({ position: 'bottomright' }).addTo(map);
                 
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    maxZoom: 19,
-                    attribution: '&copy; OpenStreetMap contributors'
+                // STUMME, STABILE ESRI-KARTE OHNE API-KEY
+                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+                    maxZoom: 16,
+                    attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ'
                 }).addTo(map);
                 
                 map.on('click', function(e) {
@@ -309,4 +340,76 @@
                 let la = Math.abs(target.lat).toFixed(2) + (target.lat >= 0 ? '° N' : '° S');
                 let lo = Math.abs(target.lng).toFixed(2) + (target.lng >= 0 ? '° E' : '° W');
                 document.getElementById('target-title').innerText = la + ', ' + lo;
-                document.getElementById('target-subtitle').innerText = mode === 'koordinaten_einf
+                document.getElementById('target-subtitle').innerText = mode === 'koordinaten_einfach' ? 'Nutze das Koordinatennetz. Pin setzen.' : 'Expertinnen-Modus: Reine Karte ohne Linien.';
+            } else {
+                document.getElementById('target-title').innerText = target.name;
+                document.getElementById('target-subtitle').innerText = 'Finde den Ort auf der Karte.';
+            }
+            active = true;
+        }
+
+        function confirmPin() {
+            if (selLat === null || selLng === null) return;
+            active = false;
+
+            let tLatLng = L.latLng(target.lat, target.lng);
+            let uLatLng = L.latLng(selLat, selLng);
+            let dist = Math.round(tLatLng.distanceTo(uLatLng) / 1000);
+            let pts = Math.max(0, 1000 - dist * 2);
+            score += pts;
+            document.getElementById('total-score').innerText = score;
+
+            targetMarker = L.circleMarker(tLatLng, { radius: 8, color: '#fff', fillColor: '#f85149', fillOpacity: 1, weight: 2 }).addTo(map);
+            lineObj = L.polyline([uLatLng, tLatLng], { color: '#9ba1a6', weight: 2, dashArray: '4, 4' }).addTo(map);
+
+            let displayName = target.name || (Math.abs(target.lat).toFixed(2) + '°, ' + Math.abs(target.lng).toFixed(2) + '°');
+            document.getElementById('target-title').innerText = displayName + ' (' + dist + ' km daneben)';
+            document.getElementById('target-subtitle').innerText = '+' + pts + ' Punkte. Nächste Runde...';
+            document.getElementById('action-container').classList.remove('visible');
+
+            round++;
+            setTimeout(nextRound, 4000);
+        }
+    </script>
+</head>
+<body>
+
+    <div id="start-screen">
+        <div class="menu-box">
+            <h1>Geografie & Koordinaten</h1>
+            <div class="mode-buttons">
+                <button class="mode-btn" type="button" onclick="startApp('blanko')">Welt-Megacities (Stumm) <span>🌏</span></button>
+                <button class="mode-btn" type="button" onclick="startApp('schweiz')">Schweiz-Alpen (Stumm) <span>🇨🇭</span></button>
+                <button class="mode-btn" type="button" onclick="startApp('koordinaten_einfach')">Koordinaten (Einfach - Netz) <span>📍</span></button>
+                <button class="mode-btn" type="button" onclick="startApp('koordinaten_profi')" style="border-color: rgba(212,175,55,0.4);">Koordinaten (Expertin) <span>⚡</span></button>
+            </div>
+        </div>
+    </div>
+
+    <div id="app-container">
+        <header>
+            <div class="game-info">
+                <div>MODUS: <strong id="current-mode-label">WELT</strong></div>
+                <div>RUNDE: <strong id="current-round">1/12</strong></div>
+                <div>PUNKTE: <strong id="total-score">0</strong></div>
+            </div>
+            <div class="header-logo-container">
+                <img src="logo.jpg" alt="Logo" class="header-logo">
+            </div>
+            <button class="btn" type="button" onclick="location.reload()">← Menü</button>
+        </header>
+
+        <main>
+            <div class="overlay-panel" id="instruction-panel">
+                <h2 id="target-title">Lade...</h2>
+                <p id="target-subtitle">Platziere einen Pin auf der Karte.</p>
+            </div>
+            <div id="map"></div>
+            <div class="footer-action" id="action-container">
+                <button class="btn btn-primary" type="button" onclick="confirmPin()">Pin bestätigen</button>
+            </div>
+        </main>
+    </div>
+
+</body>
+</html>
